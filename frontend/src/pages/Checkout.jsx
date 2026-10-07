@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import api from '../services/api';
+import { formatPrice } from '../utils/helpers';
 import toast from 'react-hot-toast';
 import './Checkout.css';
 
@@ -13,20 +14,13 @@ const Checkout = () => {
   const [loading, setLoading] = useState(true);
   const [placingOrder, setPlacingOrder] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
+  const [step, setStep] = useState(1);
   const [newAddress, setNewAddress] = useState({
-    fullName: '',
-    phone: '',
-    addressLine: '',
-    city: '',
-    state: '',
-    postalCode: '',
-    country: ''
+    fullName: '', phone: '', addressLine: '', city: '', state: '', postalCode: '', country: 'India'
   });
 
   useEffect(() => {
-    if (cart.items.length === 0 && !loading) {
-      navigate('/cart');
-    }
+    if (cart.items.length === 0 && !loading) navigate('/cart');
   }, [cart, loading, navigate]);
 
   useEffect(() => {
@@ -35,236 +29,166 @@ const Checkout = () => {
         const res = await api.get('/addresses');
         if (res.data.success) {
           setAddresses(res.data.data);
-          const defaultAddress = res.data.data.find(a => a.default);
-          if (defaultAddress) {
-            setSelectedAddressId(defaultAddress.id);
-          } else if (res.data.data.length > 0) {
-            setSelectedAddressId(res.data.data[0].id);
-          }
+          const def = res.data.data.find(a => a.default) || res.data.data[0];
+          if (def) setSelectedAddressId(def.id);
         }
-      } catch (error) {
-        console.error('Failed to fetch addresses', error);
-      } finally {
-        setLoading(false);
-      }
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
     };
     fetchAddresses();
   }, []);
-
-  const handleAddressChange = (e) => {
-    const { name, value } = e.target;
-    setNewAddress(prev => ({ ...prev, [name]: value }));
-  };
 
   const handleSaveAddress = async (e) => {
     e.preventDefault();
     try {
       const res = await api.post('/addresses', newAddress);
       if (res.data.success) {
-        const savedAddress = res.data.data;
-        setAddresses([...addresses, savedAddress]);
-        setSelectedAddressId(savedAddress.id);
+        const saved = res.data.data;
+        setAddresses([...addresses, saved]);
+        setSelectedAddressId(saved.id);
         setShowAddressForm(false);
-        setNewAddress({
-          fullName: '', phone: '', addressLine: '', 
-          city: '', state: '', postalCode: '', country: ''
-        });
-        toast.success('Address saved successfully');
+        setNewAddress({ fullName: '', phone: '', addressLine: '', city: '', state: '', postalCode: '', country: 'India' });
+        toast.success('Address saved');
       }
-    } catch (error) {
-      toast.error('Failed to save address');
-    }
+    } catch (e) { toast.error('Failed to save address'); }
   };
 
   const handlePlaceOrder = async () => {
-    if (!selectedAddressId) {
-      toast.error('Please select a shipping address');
-      return;
-    }
-
+    if (!selectedAddressId) { toast.error('Please select a delivery address'); return; }
     try {
       setPlacingOrder(true);
       const res = await api.post('/orders', { shippingAddressId: selectedAddressId });
-      
       if (res.data.success) {
         const orderId = res.data.data.id;
         toast.success('Order placed successfully!');
-        await fetchCart(); // Refresh cart
-        
-        // Auto-simulate payment for demo purposes
-        try {
-          await api.post(`/orders/${orderId}/pay`);
-          toast.success('Payment simulated successfully!');
-        } catch (payErr) {
-          console.error('Payment simulation failed', payErr);
-        }
-        
-        navigate(`/orders`);
+        await fetchCart();
+        try { await api.post(`/orders/${orderId}/pay`); } catch (e) { /* silent */ }
+        navigate('/orders');
       }
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to place order');
-    } finally {
-      setPlacingOrder(false);
-    }
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to place order');
+    } finally { setPlacingOrder(false); }
   };
 
-  if (loading) {
-    return <div className="checkout-container">Loading...</div>;
-  }
+  if (loading) return <div className="ss-checkout-container" style={{padding: '48px', textAlign: 'center'}}>Loading...</div>;
+
+  const selectedAddr = addresses.find(a => a.id === selectedAddressId);
 
   return (
-    <div className="checkout-container animate-fade-in">
-      <h1 className="checkout-title">Checkout</h1>
-      
-      <div className="checkout-grid">
-        <div className="checkout-details">
-          
-          <div className="checkout-section card">
-            <h2>1. Shipping Address</h2>
-            
-            {addresses.length > 0 && !showAddressForm ? (
-              <div className="address-list">
-                {addresses.map(address => (
-                  <label 
-                    key={address.id} 
-                    className={`address-card ₹{selectedAddressId === address.id ? 'selected' : ''}`}
-                  >
-                    <input 
-                      type="radio" 
-                      name="address" 
-                      value={address.id} 
-                      checked={selectedAddressId === address.id}
-                      onChange={() => setSelectedAddressId(address.id)}
-                      className="address-radio"
-                    />
-                    <div className="address-info">
-                      <p className="address-name">{address.fullName} 
-                        {address.default && <span className="badge badge-info ml-2">Default</span>}
-                      </p>
-                      <p>{address.addressLine}</p>
-                      <p>{address.city}, {address.state} {address.postalCode}</p>
-                      <p>{address.country}</p>
-                      <p className="address-phone">📞 {address.phone}</p>
+    <div className="ss-checkout-container">
+      {/* Steps */}
+      <div className="ss-steps">
+        <div className={`ss-step ${step >= 1 ? 'active' : ''}`}><span>1</span> Delivery Address</div>
+        <div className={`ss-step ${step >= 2 ? 'active' : ''}`}><span>2</span> Order Summary</div>
+        <div className={`ss-step ${step >= 3 ? 'active' : ''}`}><span>3</span> Payment</div>
+      </div>
+
+      <div className="ss-checkout-grid">
+        <div className="ss-checkout-main">
+          {/* Step 1: Address */}
+          {step === 1 && (
+            <div className="ss-checkout-section">
+              <h2>Select Delivery Address</h2>
+              {addresses.length > 0 && !showAddressForm ? (
+                <>
+                  {addresses.map(addr => (
+                    <label key={addr.id} className={`ss-addr-option ${selectedAddressId === addr.id ? 'selected' : ''}`}>
+                      <input type="radio" name="address" checked={selectedAddressId === addr.id}
+                        onChange={() => setSelectedAddressId(addr.id)} />
+                      <div>
+                        <strong>{addr.fullName}</strong> {addr.default && <span className="badge badge-info">Default</span>}
+                        <p>{addr.addressLine}</p>
+                        <p>{addr.city}, {addr.state} — {addr.postalCode}</p>
+                        <p>{addr.country} · 📞 {addr.phone}</p>
+                      </div>
+                    </label>
+                  ))}
+                  <button className="btn btn-secondary" onClick={() => setShowAddressForm(true)}>+ Add New Address</button>
+                  <div className="ss-step-actions">
+                    <button className="btn btn-primary" onClick={() => setStep(2)} disabled={!selectedAddressId}>
+                      Deliver Here
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <form onSubmit={handleSaveAddress} className="ss-addr-form">
+                  <div className="grid grid-cols-2">
+                    <div className="form-group"><label className="form-label">Full Name</label><input type="text" className="form-control" value={newAddress.fullName} onChange={e => setNewAddress({...newAddress, fullName: e.target.value})} required /></div>
+                    <div className="form-group"><label className="form-label">Phone</label><input type="text" className="form-control" value={newAddress.phone} onChange={e => setNewAddress({...newAddress, phone: e.target.value})} required /></div>
+                  </div>
+                  <div className="form-group"><label className="form-label">Address</label><input type="text" className="form-control" value={newAddress.addressLine} onChange={e => setNewAddress({...newAddress, addressLine: e.target.value})} required /></div>
+                  <div className="grid grid-cols-2">
+                    <div className="form-group"><label className="form-label">City</label><input type="text" className="form-control" value={newAddress.city} onChange={e => setNewAddress({...newAddress, city: e.target.value})} required /></div>
+                    <div className="form-group"><label className="form-label">State</label><input type="text" className="form-control" value={newAddress.state} onChange={e => setNewAddress({...newAddress, state: e.target.value})} required /></div>
+                    <div className="form-group"><label className="form-label">PIN Code</label><input type="text" className="form-control" value={newAddress.postalCode} onChange={e => setNewAddress({...newAddress, postalCode: e.target.value})} required /></div>
+                    <div className="form-group"><label className="form-label">Country</label><input type="text" className="form-control" value={newAddress.country} onChange={e => setNewAddress({...newAddress, country: e.target.value})} required /></div>
+                  </div>
+                  <div className="ss-step-actions">
+                    {addresses.length > 0 && <button type="button" className="btn btn-secondary" onClick={() => setShowAddressForm(false)}>Cancel</button>}
+                    <button type="submit" className="btn btn-primary">Save & Deliver Here</button>
+                  </div>
+                </form>
+              )}
+            </div>
+          )}
+
+          {/* Step 2: Order Summary */}
+          {step === 2 && (
+            <div className="ss-checkout-section">
+              <h2>Order Summary</h2>
+              {selectedAddr && (
+                <div className="ss-deliver-to">
+                  <strong>Deliver to: {selectedAddr.fullName}</strong>
+                  <p>{selectedAddr.addressLine}, {selectedAddr.city}, {selectedAddr.state} — {selectedAddr.postalCode}</p>
+                  <button className="ss-change-btn" onClick={() => setStep(1)}>Change</button>
+                </div>
+              )}
+              <div className="ss-order-items">
+                {cart.items.map(item => (
+                  <div key={item.id} className="ss-order-item">
+                    <div className="ss-order-item-img">
+                      {item.productImageUrl ? <img src={item.productImageUrl} alt={item.productName} /> : <div className="ss-cart-img-placeholder">Img</div>}
                     </div>
-                  </label>
+                    <div className="ss-order-item-info">
+                      <span>{item.productName}</span>
+                      <span className="text-secondary">Qty: {item.quantity}</span>
+                    </div>
+                    <div className="ss-order-item-price">{formatPrice(item.subtotal)}</div>
+                  </div>
                 ))}
-                <button 
-                  className="btn btn-secondary mt-4" 
-                  onClick={() => setShowAddressForm(true)}
-                >
-                  + Add New Address
+              </div>
+              <div className="ss-step-actions">
+                <button className="btn btn-secondary" onClick={() => setStep(1)}>Back</button>
+                <button className="btn btn-primary" onClick={() => setStep(3)}>Continue</button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Payment */}
+          {step === 3 && (
+            <div className="ss-checkout-section">
+              <h2>Payment</h2>
+              <div className="ss-payment-info">
+                <p>💳 Payment will be processed securely.</p>
+                <p className="text-secondary text-sm">For demo: payment is auto-simulated on order placement.</p>
+              </div>
+              <div className="ss-step-actions">
+                <button className="btn btn-secondary" onClick={() => setStep(2)}>Back</button>
+                <button className="btn btn-primary btn-lg" onClick={handlePlaceOrder} disabled={placingOrder}>
+                  {placingOrder ? 'Processing...' : 'Place Order & Pay'}
                 </button>
               </div>
-            ) : (
-              <form onSubmit={handleSaveAddress} className="address-form">
-                <div className="grid grid-cols-2">
-                  <div className="form-group">
-                    <label className="form-label">Full Name</label>
-                    <input type="text" name="fullName" className="form-control" value={newAddress.fullName} onChange={handleAddressChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Phone Number</label>
-                    <input type="text" name="phone" className="form-control" value={newAddress.phone} onChange={handleAddressChange} required />
-                  </div>
-                </div>
-                
-                <div className="form-group">
-                  <label className="form-label">Address Line</label>
-                  <input type="text" name="addressLine" className="form-control" value={newAddress.addressLine} onChange={handleAddressChange} required />
-                </div>
-                
-                <div className="grid grid-cols-2">
-                  <div className="form-group">
-                    <label className="form-label">City</label>
-                    <input type="text" name="city" className="form-control" value={newAddress.city} onChange={handleAddressChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">State/Province</label>
-                    <input type="text" name="state" className="form-control" value={newAddress.state} onChange={handleAddressChange} required />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2">
-                  <div className="form-group">
-                    <label className="form-label">Postal Code</label>
-                    <input type="text" name="postalCode" className="form-control" value={newAddress.postalCode} onChange={handleAddressChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Country</label>
-                    <input type="text" name="country" className="form-control" value={newAddress.country} onChange={handleAddressChange} required />
-                  </div>
-                </div>
-                
-                <div className="address-form-actions">
-                  {addresses.length > 0 && (
-                    <button type="button" className="btn btn-secondary" onClick={() => setShowAddressForm(false)}>Cancel</button>
-                  )}
-                  <button type="submit" className="btn btn-primary">Save Address</button>
-                </div>
-              </form>
-            )}
-          </div>
-          
-          <div className="checkout-section card">
-            <h2>2. Payment Method</h2>
-            <div className="payment-simulation">
-              <p>For this demonstration, payment will be automatically simulated.</p>
-              <div className="dummy-card">
-                <div className="dummy-card-icon">💳</div>
-                <span>Test Credit Card ending in 4242</span>
-              </div>
             </div>
-          </div>
-          
+          )}
         </div>
-        
-        <div className="checkout-summary">
-          <div className="card summary-card">
-            <h2>Order Summary</h2>
-            
-            <div className="summary-items">
-              {cart.items.map(item => (
-                <div key={item.id} className="summary-item">
-                  <div className="summary-item-image">
-                    {item.productImageUrl ? <img src={item.productImageUrl} alt={item.productName} /> : <div>img</div>}
-                  </div>
-                  <div className="summary-item-info">
-                    <div className="summary-item-name">{item.productName}</div>
-                    <div className="summary-item-qty">Qty: {item.quantity}</div>
-                  </div>
-                  <div className="summary-item-price">₹{item.subtotal.toFixed(2)}</div>
-                </div>
-              ))}
-            </div>
-            
-            <div className="summary-totals">
-              <div className="summary-row">
-                <span>Subtotal</span>
-                <span>₹{cart.total.toFixed(2)}</span>
-              </div>
-              <div className="summary-row">
-                <span>Shipping</span>
-                <span>Free</span>
-              </div>
-              <div className="summary-row">
-                <span>Tax</span>
-                <span>$0.00</span>
-              </div>
-              <div className="summary-divider"></div>
-              <div className="summary-row total">
-                <span>Total</span>
-                <span>₹{cart.total.toFixed(2)}</span>
-              </div>
-            </div>
-            
-            <button 
-              className="btn btn-primary w-full btn-place-order"
-              onClick={handlePlaceOrder}
-              disabled={placingOrder || !selectedAddressId}
-            >
-              {placingOrder ? 'Processing...' : 'Place Order & Pay'}
-            </button>
-          </div>
+
+        {/* Price Details Sidebar */}
+        <div className="ss-checkout-sidebar">
+          <h3>PRICE DETAILS</h3>
+          <div className="ss-summary-row"><span>Price ({cart.items.length} items)</span><span>{formatPrice(cart.total)}</span></div>
+          <div className="ss-summary-row"><span>Delivery</span><span className="text-success">Free</span></div>
+          <div className="ss-summary-divider"></div>
+          <div className="ss-summary-row ss-summary-total"><span>Total Amount</span><span>{formatPrice(cart.total)}</span></div>
         </div>
       </div>
     </div>

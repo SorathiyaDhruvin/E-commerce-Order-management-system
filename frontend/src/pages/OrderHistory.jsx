@@ -1,172 +1,118 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
-import toast from 'react-hot-toast';
+import { formatPrice, formatDate } from '../utils/helpers';
 import './OrderHistory.css';
 
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState({ page: 0, totalPages: 1 });
-
-  const fetchOrders = async (page = 0) => {
-    setLoading(true);
-    try {
-      const res = await api.get(`/orders?page=${page}&size=10`);
-      if (res.data.success) {
-        setOrders(res.data.data.content);
-        setPagination({
-          page: res.data.data.page,
-          totalPages: res.data.data.totalPages
-        });
-      }
-    } catch (error) {
-      toast.error('Failed to load orders');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    fetchOrders(0);
+    const fetchOrders = async () => {
+      try {
+        const res = await api.get('/orders?size=50');
+        if (res.data.success) {
+          setOrders(res.data.data.content);
+        }
+      } catch (error) {
+        console.error('Failed to fetch orders', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
   }, []);
 
-  const handlePageChange = (newPage) => {
-    fetchOrders(newPage);
-    window.scrollTo(0, 0);
-  };
-
-  const getStatusBadgeClass = (status) => {
-    switch (status) {
-      case 'PENDING': return 'badge-warning';
-      case 'CONFIRMED': return 'badge-info';
-      case 'SHIPPED': return 'badge-primary';
-      case 'DELIVERED': return 'badge-success';
-      case 'CANCELLED': return 'badge-danger';
-      default: return 'badge-secondary';
-    }
-  };
-
-  if (loading && orders.length === 0) {
+  if (loading) {
     return (
-      <div className="orders-container animate-fade-in">
-        <h1 className="orders-title">My Orders</h1>
-        <div className="orders-skeleton">
-          {Array(3).fill(0).map((_, i) => (
-            <div key={i} className="skeleton-line skeleton" style={{height: '150px', marginBottom: '1rem'}}></div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (orders.length === 0) {
-    return (
-      <div className="orders-container animate-fade-in">
-        <h1 className="orders-title">My Orders</h1>
-        <div className="orders-empty">
-          <div className="orders-empty-icon">📦</div>
-          <h2>No orders found</h2>
-          <p>You haven't placed any orders yet.</p>
-          <Link to="/products" className="btn btn-primary">Start Shopping</Link>
-        </div>
+      <div className="ss-orders-container">
+        <h1 className="ss-orders-title">Your Orders</h1>
+        {Array(3).fill(0).map((_, i) => <div key={i} className="skeleton" style={{height: '150px', marginBottom: '16px'}}></div>)}
       </div>
     );
   }
 
   return (
-    <div className="orders-container animate-fade-in">
-      <h1 className="orders-title">My Orders</h1>
-      
-      <div className="orders-list">
-        {orders.map(order => (
-          <div key={order.id} className="order-card card">
-            <div className="order-header">
-              <div className="order-header-info">
-                <div className="order-date">
-                  <span className="label">Order Placed:</span>
-                  <span>{new Date(order.createdAt).toLocaleDateString()}</span>
-                </div>
-                <div className="order-total">
-                  <span className="label">Total:</span>
-                  <span className="font-semibold">₹{order.totalAmount.toFixed(2)}</span>
-                </div>
-                <div className="order-number">
-                  <span className="label">Order #:</span>
-                  <span className="font-monospace">{order.orderNumber}</span>
-                </div>
-              </div>
-              <div className="order-status-badges">
-                <span className={`badge ₹{getStatusBadgeClass(order.orderStatus)}`}>
-                  {order.orderStatus}
-                </span>
-                {order.paymentStatus === 'PAID' && (
-                  <span className="badge badge-success ml-2">PAID</span>
-                )}
-                <Link to={`/orders/${order.id}`} className="btn btn-primary" style={{marginLeft: '1rem', padding: '0.25rem 0.75rem', fontSize: '0.9rem'}}>
-                  View Order
-                </Link>
-              </div>
-            </div>
-            
-            <div className="order-body">
-              <div className="order-items">
-                {order.items.map(item => (
-                  <div key={item.id} className="order-item">
-                    <div className="order-item-image">
-                      {item.productImageUrl ? (
-                        <img src={item.productImageUrl} alt={item.productName} />
-                      ) : (
-                        <div>Img</div>
-                      )}
-                    </div>
-                    <div className="order-item-details">
-                      <Link to={`/products/${item.productId}`} className="order-item-name">
-                        {item.productName}
-                      </Link>
-                      <div className="order-item-meta">
-                        <span>Qty: {item.quantity}</span>
-                        <span>₹{item.price.toFixed(2)} each</span>
-                      </div>
-                    </div>
-                    <div className="order-item-subtotal">
-                      ₹{item.subtotal.toFixed(2)}
-                    </div>
+    <div className="ss-orders-container">
+      <div className="ss-breadcrumb">
+        <Link to="/">Home</Link><span>›</span>
+        <Link to="/profile">Your Account</Link><span>›</span>
+        <span>Your Orders</span>
+      </div>
+
+      <h1 className="ss-orders-title">Your Orders</h1>
+
+      {orders.length === 0 ? (
+        <div className="ss-no-orders">
+          <div className="ss-no-orders-icon">📦</div>
+          <h2>You haven't placed any orders yet</h2>
+          <p>When you do, their details will show up here.</p>
+          <Link to="/products" className="btn btn-primary">Start Shopping</Link>
+        </div>
+      ) : (
+        <div className="ss-orders-list">
+          {orders.map(order => (
+            <div key={order.id} className="ss-order-card">
+              <div className="ss-order-header">
+                <div className="ss-order-header-info">
+                  <div className="ss-order-header-col">
+                    <span className="ss-order-label">ORDER PLACED</span>
+                    <span className="ss-order-value">{formatDate(order.createdAt)}</span>
                   </div>
-                ))}
+                  <div className="ss-order-header-col">
+                    <span className="ss-order-label">TOTAL</span>
+                    <span className="ss-order-value">{formatPrice(order.totalAmount)}</span>
+                  </div>
+                  <div className="ss-order-header-col">
+                    <span className="ss-order-label">SHIP TO</span>
+                    <span className="ss-order-value ss-ship-to">
+                      {order.shippingAddress?.fullName || 'User'} ▾
+                    </span>
+                  </div>
+                </div>
+                <div className="ss-order-header-actions">
+                  <span className="ss-order-label">ORDER # {order.orderNumber}</span>
+                  <Link to={`/orders/${order.id}`} className="ss-order-details-link">View order details</Link>
+                </div>
               </div>
               
-              <div className="order-shipping">
-                <h4>Shipping Address</h4>
-                <p className="font-semibold">{order.shippingAddress.fullName}</p>
-                <p>{order.shippingAddress.addressLine}</p>
-                <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode}</p>
-                <p>{order.shippingAddress.country}</p>
+              <div className="ss-order-body">
+                <div className="ss-order-status">
+                  <h3 className={
+                    order.orderStatus === 'DELIVERED' ? 'text-success' : 
+                    order.orderStatus === 'CANCELLED' ? 'text-danger' : 'text-primary'
+                  }>
+                    {order.orderStatus === 'DELIVERED' ? 'Delivered' : 
+                     order.orderStatus === 'CANCELLED' ? 'Cancelled' : 
+                     order.orderStatus === 'SHIPPED' ? 'Shipped' : 'Preparing for Dispatch'}
+                  </h3>
+                  <p>Package status: {order.orderStatus}</p>
+                </div>
+
+                <div className="ss-order-items-preview">
+                  {order.items?.map(item => (
+                    <div key={item.id} className="ss-order-item-mini">
+                      <div className="ss-item-mini-img">
+                        {item.productImageUrl ? (
+                          <img src={item.productImageUrl} alt={item.productName} />
+                        ) : (
+                          <div className="ss-cart-img-placeholder">Img</div>
+                        )}
+                      </div>
+                      <div className="ss-item-mini-info">
+                        <Link to={`/products/${item.productId}`} className="ss-item-mini-name">{item.productName}</Link>
+                        <span className="ss-item-mini-qty">Qty: {item.quantity}</span>
+                      </div>
+                      <div className="ss-item-mini-actions">
+                        <Link to={`/products/${item.productId}`} className="btn btn-secondary btn-sm w-full">Buy it again</Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-      
-      {pagination.totalPages > 1 && (
-        <div className="pagination">
-          <button 
-            className="btn btn-secondary" 
-            disabled={pagination.page === 0}
-            onClick={() => handlePageChange(pagination.page - 1)}
-          >
-            Previous
-          </button>
-          <span className="page-info">
-            Page {pagination.page + 1} of {pagination.totalPages}
-          </span>
-          <button 
-            className="btn btn-secondary" 
-            disabled={pagination.page >= pagination.totalPages - 1}
-            onClick={() => handlePageChange(pagination.page + 1)}
-          >
-            Next
-          </button>
+          ))}
         </div>
       )}
     </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import './Addresses.css';
@@ -9,29 +10,52 @@ const Addresses = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
-    fullName: '', phone: '', addressLine: '', city: '', state: '', postalCode: '', country: 'India', isDefault: false
+    fullName: '', phone: '', addressLine: '', city: '', state: '', postalCode: '', country: 'India', default: false
   });
-
-  useEffect(() => {
-    fetchAddresses();
-  }, []);
 
   const fetchAddresses = async () => {
     try {
       const res = await api.get('/addresses');
-      if (res.data.success) {
-        setAddresses(res.data.data);
-      }
-    } catch (error) {
+      if (res.data.success) setAddresses(res.data.data);
+    } catch (e) {
       toast.error('Failed to load addresses');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+  useEffect(() => {
+    fetchAddresses();
+  }, []);
+
+  const resetForm = () => {
+    setFormData({ fullName: '', phone: '', addressLine: '', city: '', state: '', postalCode: '', country: 'India', default: false });
+    setEditingId(null);
+    setShowForm(false);
+  };
+
+  const handleEdit = (addr) => {
+    setFormData({ ...addr });
+    setEditingId(addr.id);
+    setShowForm(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this address?')) {
+      try {
+        await api.delete(`/addresses/${id}`);
+        toast.success('Address deleted');
+        fetchAddresses();
+      } catch (e) { toast.error('Failed to delete address'); }
+    }
+  };
+
+  const handleSetDefault = async (id) => {
+    try {
+      await api.put(`/addresses/${id}/default`);
+      toast.success('Default address updated');
+      fetchAddresses();
+    } catch (e) { toast.error('Failed to update default address'); }
   };
 
   const handleSubmit = async (e) => {
@@ -44,86 +68,102 @@ const Addresses = () => {
         await api.post('/addresses', formData);
         toast.success('Address added');
       }
-      setShowForm(false);
-      setEditingId(null);
-      setFormData({ fullName: '', phone: '', addressLine: '', city: '', state: '', postalCode: '', country: 'India', isDefault: false });
       fetchAddresses();
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to save address');
-    }
+      resetForm();
+    } catch (e) { toast.error('Failed to save address'); }
   };
 
-  const handleEdit = (address) => {
-    setFormData(address);
-    setEditingId(address.id);
-    setShowForm(true);
-  };
-
-  const handleDelete = async (id) => {
-    if(window.confirm('Are you sure you want to delete this address?')) {
-      try {
-        await api.delete(`/addresses/${id}`);
-        toast.success('Address deleted');
-        fetchAddresses();
-      } catch (error) {
-        toast.error('Failed to delete address');
-      }
-    }
-  };
-
-  if (loading) return <div className="p-8 text-center">Loading addresses...</div>;
+  if (loading) {
+    return <div className="ss-addresses-container">Loading...</div>;
+  }
 
   return (
-    <div className="addresses-container animate-fade-in">
-      <div className="addresses-header">
-        <h2>My Addresses</h2>
-        <button className="btn btn-primary" onClick={() => { setShowForm(!showForm); setEditingId(null); setFormData({ fullName: '', phone: '', addressLine: '', city: '', state: '', postalCode: '', country: 'India', isDefault: false }); }}>
-          {showForm ? 'Cancel' : 'Add New Address'}
-        </button>
+    <div className="ss-addresses-container">
+      <div className="ss-breadcrumb">
+        <Link to="/">Home</Link><span>›</span>
+        <Link to="/profile">Your Account</Link><span>›</span>
+        <span>Your Addresses</span>
       </div>
 
-      {showForm && (
-        <form className="address-form card" onSubmit={handleSubmit}>
-          <div className="grid grid-cols-2">
-            <div className="form-group"><label className="form-label">Full Name</label><input type="text" name="fullName" className="form-control" value={formData.fullName} onChange={handleInputChange} required /></div>
-            <div className="form-group"><label className="form-label">Phone</label><input type="text" name="phone" className="form-control" value={formData.phone} onChange={handleInputChange} required /></div>
-          </div>
-          <div className="form-group"><label className="form-label">Address Line</label><input type="text" name="addressLine" className="form-control" value={formData.addressLine} onChange={handleInputChange} required /></div>
-          <div className="grid grid-cols-2">
-            <div className="form-group"><label className="form-label">City</label><input type="text" name="city" className="form-control" value={formData.city} onChange={handleInputChange} required /></div>
-            <div className="form-group"><label className="form-label">State</label><input type="text" name="state" className="form-control" value={formData.state} onChange={handleInputChange} required /></div>
-            <div className="form-group"><label className="form-label">PIN Code</label><input type="text" name="postalCode" className="form-control" value={formData.postalCode} onChange={handleInputChange} required /></div>
-            <div className="form-group"><label className="form-label">Country</label><input type="text" name="country" className="form-control" value={formData.country} onChange={handleInputChange} required /></div>
-          </div>
-          <div className="form-group flex align-center gap-2">
-            <input type="checkbox" name="isDefault" id="isDefault" checked={formData.isDefault} onChange={handleInputChange} />
-            <label htmlFor="isDefault">Set as Default Address</label>
-          </div>
-          <button type="submit" className="btn btn-primary">Save Address</button>
-        </form>
-      )}
+      <div className="ss-addresses-header">
+        <h1>Your Addresses</h1>
+      </div>
 
-      {!showForm && addresses.length === 0 && (
-        <div className="no-addresses card">
-          <div className="no-products-icon">📍</div>
-          <h3>No Addresses Found</h3>
-          <p>Add your delivery address to proceed with orders seamlessly.</p>
+      {showForm ? (
+        <div className="ss-address-form-card">
+          <h2>{editingId ? 'Edit Address' : 'Add a new address'}</h2>
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label className="form-label">Full Name</label>
+              <input type="text" className="form-control" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} required />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Mobile Number</label>
+              <input type="text" className="form-control" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} required />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Flat, House no., Building, Company, Apartment</label>
+              <input type="text" className="form-control" value={formData.addressLine} onChange={e => setFormData({...formData, addressLine: e.target.value})} required />
+            </div>
+            <div className="grid grid-cols-2">
+              <div className="form-group">
+                <label className="form-label">Town/City</label>
+                <input type="text" className="form-control" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} required />
+              </div>
+              <div className="form-group">
+                <label className="form-label">State</label>
+                <input type="text" className="form-control" value={formData.state} onChange={e => setFormData({...formData, state: e.target.value})} required />
+              </div>
+            </div>
+            <div className="grid grid-cols-2">
+              <div className="form-group">
+                <label className="form-label">PIN Code</label>
+                <input type="text" className="form-control" value={formData.postalCode} onChange={e => setFormData({...formData, postalCode: e.target.value})} required />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Country</label>
+                <input type="text" className="form-control" value={formData.country} onChange={e => setFormData({...formData, country: e.target.value})} required />
+              </div>
+            </div>
+            <div className="form-group checkbox-group" style={{display: 'flex', gap: '8px', alignItems: 'center', marginTop: '8px'}}>
+              <input type="checkbox" id="defaultAddr" checked={formData.default} onChange={e => setFormData({...formData, default: e.target.checked})} />
+              <label htmlFor="defaultAddr">Make this my default address</label>
+            </div>
+            <div className="ss-address-form-actions">
+              <button type="button" className="btn btn-secondary" onClick={resetForm}>Cancel</button>
+              <button type="submit" className="btn btn-primary">{editingId ? 'Update Address' : 'Add Address'}</button>
+            </div>
+          </form>
         </div>
-      )}
+      ) : (
+        <div className="ss-addresses-grid">
+          <div className="ss-address-card ss-address-add-card" onClick={() => setShowForm(true)}>
+            <div className="ss-add-icon">+</div>
+            <h2>Add address</h2>
+          </div>
 
-      {!showForm && addresses.length > 0 && (
-        <div className="addresses-grid grid grid-cols-2">
           {addresses.map(addr => (
-            <div key={addr.id} className="address-card card">
-              {addr.isDefault && <span className="badge badge-primary default-badge">Default</span>}
-              <h4>{addr.fullName}</h4>
-              <p>{addr.addressLine}</p>
-              <p>{addr.city}, {addr.state} {addr.postalCode}</p>
-              <p>{addr.country}</p>
-              <p>Phone: {addr.phone}</p>
-              <div className="address-actions mt-4 flex gap-2">
-                <button onClick={() => handleEdit(addr)} className="btn btn-secondary">Edit</button>
-                <button onClick={() => handleDelete(addr.id)} className="btn btn-danger">Delete</button>
+            <div key={addr.id} className="ss-address-card">
+              <div className="ss-address-card-header">
+                {addr.default && <span className="ss-default-badge">Default</span>}
+              </div>
+              <div className="ss-address-details">
+                <strong>{addr.fullName}</strong>
+                <p>{addr.addressLine}</p>
+                <p>{addr.city}, {addr.state} {addr.postalCode}</p>
+                <p>{addr.country}</p>
+                <p>Phone number: {addr.phone}</p>
+              </div>
+              <div className="ss-address-actions">
+                <button onClick={() => handleEdit(addr)}>Edit</button>
+                <span className="ss-action-divider">|</span>
+                <button onClick={() => handleDelete(addr.id)}>Remove</button>
+                {!addr.default && (
+                  <>
+                    <span className="ss-action-divider">|</span>
+                    <button onClick={() => handleSetDefault(addr.id)}>Set as Default</button>
+                  </>
+                )}
               </div>
             </div>
           ))}
@@ -132,4 +172,5 @@ const Addresses = () => {
     </div>
   );
 };
+
 export default Addresses;

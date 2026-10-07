@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
-import toast from 'react-hot-toast';
+import { formatPrice, formatDate } from '../utils/helpers';
 import './OrderDetails.css';
 
 const OrderDetails = () => {
@@ -10,95 +10,138 @@ const OrderDetails = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchOrder = async () => {
+    const fetchOrderDetails = async () => {
       try {
         const res = await api.get(`/orders/${id}`);
         if (res.data.success) {
           setOrder(res.data.data);
         }
       } catch (error) {
-        toast.error('Failed to load order details');
+        console.error('Failed to fetch order details', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchOrder();
+    fetchOrderDetails();
   }, [id]);
 
-  if (loading) return <div className="p-8 text-center">Loading order...</div>;
-  if (!order) return <div className="p-8 text-center">Order not found</div>;
+  if (loading) {
+    return (
+      <div className="ss-order-details-container">
+        <div className="skeleton" style={{height: '32px', width: '200px', marginBottom: '16px'}}></div>
+        <div className="skeleton" style={{height: '200px', marginBottom: '16px'}}></div>
+        <div className="skeleton" style={{height: '300px'}}></div>
+      </div>
+    );
+  }
 
-  const timelineSteps = ['PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED'];
-  const currentStepIndex = timelineSteps.indexOf(order.orderStatus);
+  if (!order) {
+    return (
+      <div className="ss-order-details-container">
+        <div className="ss-error-card">Order not found.</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="order-details-container animate-fade-in">
-      <div className="flex justify-between items-center mb-6 border-b pb-4">
-        <h2>Order Details <span className="text-secondary text-sm ml-2">#{order.orderNumber}</span></h2>
-        <Link to="/orders" className="btn btn-secondary">Back to Orders</Link>
+    <div className="ss-order-details-container">
+      <div className="ss-breadcrumb">
+        <Link to="/">Home</Link><span>›</span>
+        <Link to="/profile">Your Account</Link><span>›</span>
+        <Link to="/orders">Your Orders</Link><span>›</span>
+        <span>Order Details</span>
       </div>
 
-      <div className="timeline-container card mb-6">
-        <div className="timeline">
-          {timelineSteps.map((step, index) => {
-            let statusClass = "timeline-step ";
-            if (index < currentStepIndex) statusClass += "completed";
-            else if (index === currentStepIndex) statusClass += "active";
-            
-            return (
-              <div key={step} className={statusClass}>
-                <div className="step-circle"></div>
-                <div className="step-label">{step}</div>
-              </div>
-            );
-          })}
+      <div className="ss-order-details-header">
+        <h1>Order Details</h1>
+        <div className="ss-order-meta">
+          <span>Ordered on {formatDate(order.createdAt)}</span>
+          <span className="ss-divider">|</span>
+          <span>Order# {order.orderNumber}</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2">
-          <div className="card p-6">
-            <h3 className="mb-4 border-b pb-2">Items in Order</h3>
-            <div className="order-items-list">
-              {order.items.map(item => (
-                <div key={item.id} className="flex justify-between items-center mb-4 pb-4 border-b">
-                  <div className="flex items-center gap-4">
-                    <img src={item.productImageUrl || 'https://via.placeholder.com/80'} alt={item.productName} className="w-20 h-20 object-cover rounded" />
-                    <div>
-                      <h4 className="font-semibold">{item.productName}</h4>
-                      <p className="text-sm text-secondary">Qty: {item.quantity} x ₹{item.price.toFixed(2)}</p>
+      <div className="ss-order-details-grid">
+        {/* Left Column: Shipping & Summary */}
+        <div className="ss-order-info-col">
+          <div className="ss-info-box">
+            <h3>Shipping Address</h3>
+            {order.shippingAddress ? (
+              <div className="ss-address-details">
+                <strong>{order.shippingAddress.fullName}</strong>
+                <p>{order.shippingAddress.addressLine}</p>
+                <p>{order.shippingAddress.city}, {order.shippingAddress.state} — {order.shippingAddress.postalCode}</p>
+                <p>{order.shippingAddress.country}</p>
+                <p>Phone: {order.shippingAddress.phone}</p>
+              </div>
+            ) : (
+              <p>No shipping address provided.</p>
+            )}
+          </div>
+
+          <div className="ss-info-box">
+            <h3>Payment Method</h3>
+            <p>Status: <span className={order.paymentStatus === 'PAID' ? 'text-success' : 'text-warning'}>
+              {order.paymentStatus}
+            </span></p>
+          </div>
+
+          <div className="ss-info-box ss-summary-box">
+            <h3>Order Summary</h3>
+            <div className="ss-summary-row">
+              <span>Item(s) Subtotal:</span>
+              <span>{formatPrice(order.totalAmount)}</span>
+            </div>
+            <div className="ss-summary-row">
+              <span>Shipping:</span>
+              <span>Free</span>
+            </div>
+            <div className="ss-summary-divider"></div>
+            <div className="ss-summary-row ss-summary-total">
+              <span>Grand Total:</span>
+              <span>{formatPrice(order.totalAmount)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Items */}
+        <div className="ss-order-items-col">
+          <div className="ss-items-box">
+            <h3 className={
+              order.orderStatus === 'DELIVERED' ? 'text-success' : 
+              order.orderStatus === 'CANCELLED' ? 'text-danger' : 'text-primary'
+            }>
+              {order.orderStatus === 'DELIVERED' ? 'Delivered' : 
+               order.orderStatus === 'CANCELLED' ? 'Cancelled' : 
+               order.orderStatus === 'SHIPPED' ? 'Shipped' : 'Preparing for Dispatch'}
+            </h3>
+            
+            <div className="ss-details-item-list">
+              {order.items?.map(item => (
+                <div key={item.id} className="ss-details-item">
+                  <div className="ss-details-item-img">
+                    {item.productImageUrl ? (
+                      <img src={item.productImageUrl} alt={item.productName} />
+                    ) : (
+                      <div className="ss-cart-img-placeholder">Img</div>
+                    )}
+                  </div>
+                  <div className="ss-details-item-info">
+                    <Link to={`/products/${item.productId}`} className="ss-details-item-name">{item.productName}</Link>
+                    <span className="ss-details-item-price">{formatPrice(item.price)}</span>
+                    <span className="ss-details-item-qty">Qty: {item.quantity}</span>
+                    <div className="ss-details-item-actions">
+                      <Link to={`/products/${item.productId}`} className="btn btn-secondary btn-sm">Buy it again</Link>
                     </div>
                   </div>
-                  <div className="font-semibold">₹{item.subtotal.toFixed(2)}</div>
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-
-        <div>
-          <div className="card p-6 mb-6">
-            <h3 className="mb-4 border-b pb-2">Order Summary</h3>
-            <div className="flex justify-between mb-2"><span className="text-secondary">Subtotal</span><span>₹{order.totalAmount.toFixed(2)}</span></div>
-            <div className="flex justify-between mb-2"><span className="text-secondary">Shipping</span><span>Free</span></div>
-            <div className="flex justify-between font-bold text-lg mt-4 pt-4 border-t"><span>Total</span><span>₹{order.totalAmount.toFixed(2)}</span></div>
-            <div className="mt-4 pt-4 border-t">
-              <span className="text-secondary block mb-1">Payment Status:</span>
-              <span className={`badge ₹{order.paymentStatus === 'PAID' ? 'badge-success' : 'badge-warning'}`}>{order.paymentStatus}</span>
-            </div>
-          </div>
-
-          <div className="card p-6">
-            <h3 className="mb-4 border-b pb-2">Shipping Address</h3>
-            <p className="font-semibold">{order.shippingAddress.fullName}</p>
-            <p className="text-secondary text-sm">{order.shippingAddress.phone}</p>
-            <p className="mt-2 text-sm">{order.shippingAddress.addressLine}</p>
-            <p className="text-sm">{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode}</p>
-            <p className="text-sm">{order.shippingAddress.country}</p>
           </div>
         </div>
       </div>
     </div>
   );
 };
+
 export default OrderDetails;

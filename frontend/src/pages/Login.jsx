@@ -12,22 +12,15 @@ const Login = () => {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
   const from = location.state?.from?.pathname || "/";
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate(from, { replace: true });
-    }
+    if (isAuthenticated) navigate(from, { replace: true });
   }, [isAuthenticated, navigate, from]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
-      toast.error('Please enter both email and password');
-      return;
-    }
-
+    if (!email || !password) { toast.error('Please enter both email and password'); return; }
     try {
       setLoading(true);
       await login(email, password);
@@ -41,66 +34,36 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card animate-fade-in">
-        <div className="auth-header">
-          <Link to="/" className="auth-logo">ShopSphere</Link>
-          <h2>Welcome Back</h2>
-          <p>Please sign in to your account</p>
+    <div className="ss-auth-page">
+      <div className="ss-auth-card">
+        <div className="ss-auth-header">
+          <Link to="/" className="ss-auth-logo">ShopSphere</Link>
+          <h2>Sign In</h2>
         </div>
-        
-        <form onSubmit={handleSubmit} className="auth-form">
+        <form onSubmit={handleSubmit} className="ss-auth-form">
           <div className="form-group">
-            <label className="form-label" htmlFor="email">Email Address</label>
-            <input
-              type="email"
-              id="email"
-              className="form-control"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            <label className="form-label" htmlFor="email">Email</label>
+            <input type="email" id="email" className="form-control" placeholder="Enter your email"
+              value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
-          
           <div className="form-group">
             <label className="form-label" htmlFor="password">Password</label>
-            <div className="password-input-wrapper">
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                className="form-control"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <button
-                type="button"
-                className="password-toggle-btn"
-                onClick={() => setShowPassword(!showPassword)}
-                title={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                )}
+            <div className="ss-password-wrap">
+              <input type={showPassword ? "text" : "password"} id="password" className="form-control"
+                placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <button type="button" className="ss-password-toggle" onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}>
+                {showPassword ? '🙈' : '👁️'}
               </button>
             </div>
           </div>
-          
-          <button 
-            type="submit" 
-            className="btn btn-primary w-full auth-btn" 
-            disabled={loading}
-          >
+          <button type="submit" className="btn btn-primary w-full ss-auth-submit" disabled={loading}>
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-        
-        <div className="auth-footer">
-          <p>Don't have an account? <Link to="/register" className="auth-link">Sign up</Link></p>
+        <div className="ss-auth-divider">or</div>
+        <div className="ss-auth-footer">
+          <p>New to ShopSphere? <Link to="/register">Create an account</Link></p>
         </div>
       </div>
     </div>

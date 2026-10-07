@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
+import { formatPrice } from '../utils/helpers';
+import { useCart } from '../context/CartContext';
 import './ProductListing.css';
 
 const ProductListing = () => {
@@ -8,22 +10,20 @@ const ProductListing = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState({ page: 0, totalPages: 1 });
-  
+  const [pagination, setPagination] = useState({ page: 0, totalPages: 1, totalElements: 0 });
+  const { addToCart } = useCart();
+
   const categoryParam = searchParams.get('category') || '';
   const searchParam = searchParams.get('search') || '';
+  const sortParam = searchParams.get('sort') || '';
   const pageParam = parseInt(searchParams.get('page')) || 0;
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const res = await api.get('/categories');
-        if (res.data.success) {
-          setCategories(res.data.data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch categories', error);
-      }
+        if (res.data.success) setCategories(res.data.data);
+      } catch (e) { /* silent */ }
     };
     fetchCategories();
   }, []);
@@ -33,143 +33,205 @@ const ProductListing = () => {
       setLoading(true);
       try {
         let endpoint = `/products?page=${pageParam}&size=12`;
-        
+
         if (searchParam) {
           endpoint = `/products/search?keyword=${encodeURIComponent(searchParam)}&page=${pageParam}&size=12`;
-          if (categoryParam) {
-            endpoint += `&categoryId=${categoryParam}`;
-          }
+          if (categoryParam) endpoint += `&categoryId=${categoryParam}`;
         } else if (categoryParam) {
           endpoint = `/products/category/${categoryParam}?page=${pageParam}&size=12`;
         }
 
         const res = await api.get(endpoint);
         if (res.data.success) {
-          setProducts(res.data.data.content);
+          let items = res.data.data.content;
+          // Client-side sorting
+          if (sortParam === 'price-asc') items = [...items].sort((a, b) => a.price - b.price);
+          else if (sortParam === 'price-desc') items = [...items].sort((a, b) => b.price - a.price);
+          else if (sortParam === 'newest') items = [...items].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+          setProducts(items);
           setPagination({
             page: res.data.data.page,
-            totalPages: res.data.data.totalPages
+            totalPages: res.data.data.totalPages,
+            totalElements: res.data.data.totalElements || items.length,
           });
         }
-      } catch (error) {
-        console.error('Failed to fetch products', error);
+      } catch (e) {
+        console.error('Failed to fetch products', e);
       } finally {
         setLoading(false);
       }
     };
     fetchProducts();
-  }, [categoryParam, searchParam, pageParam]);
+  }, [categoryParam, searchParam, pageParam, sortParam]);
 
-  const handleCategoryChange = (e) => {
-    const value = e.target.value;
+  const updateParam = (key, value) => {
     const newParams = new URLSearchParams(searchParams);
-    if (value) {
-      newParams.set('category', value);
-    } else {
-      newParams.delete('category');
-    }
-    newParams.set('page', '0');
+    if (value) newParams.set(key, value);
+    else newParams.delete(key);
+    if (key !== 'page') newParams.set('page', '0');
     setSearchParams(newParams);
   };
 
+  const clearFilters = () => setSearchParams(new URLSearchParams());
+
   const handlePageChange = (newPage) => {
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set('page', newPage.toString());
-    setSearchParams(newParams);
+    updateParam('page', newPage.toString());
     window.scrollTo(0, 0);
   };
 
+  const activeCategoryName = categories.find(c => String(c.id) === categoryParam)?.name;
+
   return (
-    <div className="product-listing-container animate-fade-in">
-      <div className="products-hero">
-        <div className="products-hero-content">
-          <h1>Discover Your Next Favorite Item</h1>
-          <p>Explore our premium collection of meticulously crafted products.</p>
+    <div className="ss-listing">
+      <div className="ss-listing-container">
+        {/* Breadcrumb */}
+        <div className="ss-breadcrumb">
+          <Link to="/">Home</Link>
+          <span>›</span>
+          {activeCategoryName ? (
+            <>
+              <Link to="/products">Products</Link>
+              <span>›</span>
+              <span>{activeCategoryName}</span>
+            </>
+          ) : (
+            <span>Products</span>
+          )}
         </div>
-      </div>
 
-      <div className="listing-header">
-        <h2>{searchParam ? `Search Results for "${searchParam}"` : 'All Products'}</h2>
-        
-        <div className="filters">
-          <select 
-            className="form-control category-select" 
-            value={categoryParam} 
-            onChange={handleCategoryChange}
-          >
-            <option value="">All Categories</option>
-            {categories.map(cat => (
-              <option key={cat.id} value={cat.id}>{cat.name}</option>
-            ))}
-          </select>
-        </div>
-      </div>
+        <div className="ss-listing-grid">
+          {/* Filters Sidebar */}
+          <aside className="ss-filters">
+            <div className="ss-filter-header">
+              <h3>Filters</h3>
+              {(categoryParam || searchParam) && (
+                <button className="ss-clear-filters" onClick={clearFilters}>Clear All</button>
+              )}
+            </div>
 
-      <div className="products-grid grid grid-cols-4">
-        {loading ? (
-          Array(8).fill(0).map((_, i) => <div key={i} className="product-card skeleton" style={{height: '350px'}}></div>)
-        ) : products.length > 0 ? (
-          products.map(product => (
-            <div key={product.id} className="product-card card">
-              <div className="product-image-container">
-                {product.imageUrl ? (
-                  <img src={product.imageUrl} alt={product.name} className="product-image" />
-                ) : (
-                  <div className="product-image-placeholder">No Image</div>
-                )}
-                {product.stockQuantity <= 5 && product.stockQuantity > 0 && (
-                  <span className="badge badge-warning product-badge">Low Stock</span>
-                )}
-                {product.stockQuantity === 0 && (
-                  <span className="badge badge-danger product-badge">Out of Stock</span>
-                )}
+            {/* Category Filter */}
+            <div className="ss-filter-section">
+              <h4>CATEGORY</h4>
+              <label className={`ss-filter-option ${!categoryParam ? 'active' : ''}`}>
+                <input type="radio" name="category" value="" checked={!categoryParam} onChange={() => updateParam('category', '')} />
+                All Categories
+              </label>
+              {categories.map(cat => (
+                <label key={cat.id} className={`ss-filter-option ${String(cat.id) === categoryParam ? 'active' : ''}`}>
+                  <input type="radio" name="category" value={cat.id} checked={String(cat.id) === categoryParam} onChange={() => updateParam('category', String(cat.id))} />
+                  {cat.name}
+                </label>
+              ))}
+            </div>
+
+            {/* Price Filter */}
+            <div className="ss-filter-section">
+              <h4>PRICE</h4>
+              {[
+                { label: 'Under ₹500', max: 500 },
+                { label: '₹500 - ₹1,000', min: 500, max: 1000 },
+                { label: '₹1,000 - ₹5,000', min: 1000, max: 5000 },
+                { label: '₹5,000 - ₹10,000', min: 5000, max: 10000 },
+                { label: '₹10,000 & Above', min: 10000 },
+              ].map((range, i) => (
+                <label key={i} className="ss-filter-option">
+                  <input type="checkbox" disabled />
+                  {range.label}
+                </label>
+              ))}
+            </div>
+
+            {/* Availability */}
+            <div className="ss-filter-section">
+              <h4>AVAILABILITY</h4>
+              <label className="ss-filter-option">
+                <input type="checkbox" disabled />
+                In Stock
+              </label>
+              <label className="ss-filter-option">
+                <input type="checkbox" disabled />
+                Out of Stock
+              </label>
+            </div>
+          </aside>
+
+          {/* Products Main Area */}
+          <div className="ss-listing-main">
+            {/* Header */}
+            <div className="ss-listing-header">
+              <div className="ss-listing-title">
+                <h2>
+                  {searchParam ? `Results for "${searchParam}"` : activeCategoryName || 'All Products'}
+                </h2>
+                {!loading && <span className="ss-results-count">({pagination.totalElements} products)</span>}
               </div>
-              <div className="product-info">
-                <span className="product-brand">{product.brand}</span>
-                <h3 className="product-name" title={product.name}>{product.name}</h3>
-                <div className="product-price">₹{product.price.toFixed(2)}</div>
-                <Link to={`/products/${product.id}`} className="btn btn-secondary w-full">View Details</Link>
+              <div className="ss-sort">
+                <label>Sort By:</label>
+                <select value={sortParam} onChange={(e) => updateParam('sort', e.target.value)} className="form-control">
+                  <option value="">Relevance</option>
+                  <option value="price-asc">Price — Low to High</option>
+                  <option value="price-desc">Price — High to Low</option>
+                  <option value="newest">Newest First</option>
+                </select>
               </div>
             </div>
-          ))
-        ) : (
-          <div className="no-products">
-            <div className="no-products-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+
+            {/* Product Grid */}
+            <div className="ss-products-grid">
+              {loading ? (
+                Array(8).fill(0).map((_, i) => <div key={i} className="ss-product-card skeleton" style={{height: '300px'}}></div>)
+              ) : products.length > 0 ? (
+                products.map(product => (
+                  <div key={product.id} className="ss-product-card">
+                    <Link to={`/products/${product.id}`} className="ss-product-img-link">
+                      <div className="ss-product-img-wrap">
+                        {product.imageUrl ? (
+                          <img src={product.imageUrl} alt={product.name} loading="lazy" />
+                        ) : (
+                          <div className="ss-product-img-placeholder">No Image</div>
+                        )}
+                      </div>
+                    </Link>
+                    <div className="ss-product-body">
+                      {product.brand && <span className="ss-product-brand">{product.brand}</span>}
+                      <Link to={`/products/${product.id}`} className="ss-product-name">{product.name}</Link>
+                      <div className="ss-product-price-row">
+                        <span className="ss-product-price">{formatPrice(product.price)}</span>
+                      </div>
+                      {product.stockQuantity <= 0 ? (
+                        <span className="ss-out-of-stock">Out of Stock</span>
+                      ) : product.stockQuantity <= 5 ? (
+                        <span className="ss-low-stock">Only {product.stockQuantity} left</span>
+                      ) : (
+                        <span className="ss-in-stock">Free Delivery</span>
+                      )}
+                      <button className="btn btn-primary w-full ss-add-cart-btn" onClick={() => addToCart(product.id, 1)} disabled={product.stockQuantity <= 0}>
+                        Add to Cart
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="ss-empty-results">
+                  <p><strong>No products found</strong></p>
+                  <p>Try changing your search or filters.</p>
+                  <button className="btn btn-secondary" onClick={clearFilters}>Clear Filters</button>
+                </div>
+              )}
             </div>
-            <h3>Nothing found!</h3>
-            <p>We couldn't find any products matching your current filters.</p>
-            <button 
-              className="btn btn-primary" 
-              onClick={() => setSearchParams(new URLSearchParams())}
-            >
-              Clear Filters
-            </button>
+
+            {/* Pagination */}
+            {!loading && pagination.totalPages > 1 && (
+              <div className="ss-pagination">
+                <button className="btn btn-secondary btn-sm" disabled={pagination.page === 0} onClick={() => handlePageChange(pagination.page - 1)}>Previous</button>
+                <span className="ss-page-info">Page {pagination.page + 1} of {pagination.totalPages}</span>
+                <button className="btn btn-secondary btn-sm" disabled={pagination.page >= pagination.totalPages - 1} onClick={() => handlePageChange(pagination.page + 1)}>Next</button>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-
-      {!loading && pagination.totalPages > 1 && (
-        <div className="pagination">
-          <button 
-            className="btn btn-secondary" 
-            disabled={pagination.page === 0}
-            onClick={() => handlePageChange(pagination.page - 1)}
-          >
-            Previous
-          </button>
-          <span className="page-info">
-            Page {pagination.page + 1} of {pagination.totalPages}
-          </span>
-          <button 
-            className="btn btn-secondary" 
-            disabled={pagination.page >= pagination.totalPages - 1}
-            onClick={() => handlePageChange(pagination.page + 1)}
-          >
-            Next
-          </button>
         </div>
-      )}
+      </div>
     </div>
   );
 };

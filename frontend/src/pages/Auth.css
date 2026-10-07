@@ -1,94 +1,58 @@
-.auth-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: calc(100vh - 70px - 200px);
-  padding: 2rem 1rem;
+/* === AUTH PAGES === */
+.ss-auth-page {
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: var(--bg-page); padding: 24px 16px;
+}
+.ss-auth-card {
+  width: 100%; max-width: 380px; background: #fff;
+  border: 1px solid var(--border-light); border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+.ss-auth-header {
+  padding: 20px 24px 16px; text-align: center;
+  border-bottom: 1px solid var(--border-light);
+}
+.ss-auth-logo {
+  font-size: 22px; font-weight: 700; color: var(--header-bg);
+  display: block; margin-bottom: 8px;
+}
+.ss-auth-header h2 { font-size: 16px; font-weight: 500; color: var(--text-primary); }
+.ss-auth-header p { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+
+.ss-auth-form { padding: 20px 24px; }
+.ss-auth-form .form-group { margin-bottom: 14px; }
+.ss-auth-form .form-label { font-size: 13px; }
+.ss-auth-form .form-control { padding: 10px 12px; }
+
+.ss-password-wrap { position: relative; }
+.ss-password-wrap .form-control { padding-right: 40px; }
+.ss-password-toggle {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; color: var(--text-secondary); padding: 4px;
 }
 
-.auth-card {
-  background-color: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-lg);
-  width: 100%;
-  max-width: 400px;
-  padding: 2.5rem;
-}
+.ss-auth-submit { margin-top: 4px; padding: 10px; font-size: 14px; }
 
-.auth-header {
-  text-align: center;
-  margin-bottom: 2rem;
+.ss-auth-footer {
+  padding: 16px 24px; text-align: center;
+  border-top: 1px solid var(--border-light);
 }
+.ss-auth-footer p { font-size: 13px; color: var(--text-secondary); }
+.ss-auth-footer a { color: var(--primary); font-weight: 500; }
+.ss-auth-footer a:hover { text-decoration: underline; }
 
-.auth-logo {
-  display: inline-block;
-  font-size: 1.75rem;
-  font-weight: 800;
-  color: var(--primary);
-  margin-bottom: 1rem;
-}
-
-.auth-header h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-}
-
-.auth-header p {
-  color: var(--text-secondary);
-}
-
-.auth-form {
-  margin-bottom: 1.5rem;
-}
-
-.auth-btn {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  font-size: 1rem;
-}
-
-.auth-footer {
-  text-align: center;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  border-top: 1px solid var(--border);
-  padding-top: 1.5rem;
-}
-
-.auth-link {
-  color: var(--primary);
-  font-weight: 600;
-  margin-left: 0.25rem;
-}
-
-.auth-link:hover {
-  text-decoration: underline;
-}
-
-.password-input-wrapper {
+.ss-auth-divider {
+  text-align: center; margin: 12px 0; font-size: 12px; color: var(--text-hint);
   position: relative;
-  display: flex;
-  align-items: center;
 }
-
-.password-input-wrapper .form-control {
-  padding-right: 2.5rem;
+.ss-auth-divider::before, .ss-auth-divider::after {
+  content: ''; position: absolute; top: 50%; height: 1px;
+  width: calc(50% - 30px); background: var(--border-light);
 }
+.ss-auth-divider::before { left: 0; }
+.ss-auth-divider::after { right: 0; }
 
-.password-toggle-btn {
-  position: absolute;
-  right: 10px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-secondary);
-  display: flex;
-  padding: 0;
-}
-
-.password-toggle-btn:hover {
-  color: var(--primary);
+@media (max-width: 480px) {
+  .ss-auth-card { max-width: 100%; border: none; border-radius: 0; box-shadow: none; }
 }
