@@ -28,16 +28,40 @@
   margin-bottom: 2rem;
 }
 
-.hero-btn {
-  background-color: white;
-  color: var(--primary);
-  font-size: 1.1rem;
-  padding: 0.75rem 2rem;
+.hero-search-form {
+  display: flex;
+  background: white;
+  border-radius: 9999px;
+  overflow: hidden;
+  padding: 0.25rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  max-width: 500px;
 }
 
-.hero-btn:hover {
-  background-color: #f8fafc;
-  color: var(--primary-hover);
+.hero-search-input {
+  flex: 1;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  color: var(--text-primary);
+  outline: none;
+  background: transparent;
+}
+
+.hero-search-btn {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.hero-search-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
 .section-title {

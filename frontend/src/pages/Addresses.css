@@ -1,0 +1,38 @@
+.addresses-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+.addresses-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1rem;
+}
+.address-form {
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+.no-addresses {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+.address-card {
+  position: relative;
+  padding: 1.5rem;
+}
+.default-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+.address-card h4 {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+.address-card p {
+  color: var(--text-secondary);
+  margin-bottom: 0.2rem;
+}

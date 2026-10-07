@@ -103,6 +103,9 @@ const OrderHistory = () => {
                 {order.paymentStatus === 'PAID' && (
                   <span className="badge badge-success ml-2">PAID</span>
                 )}
+                <Link to={`/orders/${order.id}`} className="btn btn-primary" style={{marginLeft: '1rem', padding: '0.25rem 0.75rem', fontSize: '0.9rem'}}>
+                  View Order
+                </Link>
               </div>
             </div>
             

@@ -7,6 +7,8 @@ const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchHomeData = async () => {
@@ -32,16 +34,32 @@ const Home = () => {
     fetchHomeData();
   }, []);
 
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchTerm)}`);
+    }
+  };
+
   return (
     <div className="home-container animate-fade-in">
       {/* Hero Section */}
       <section className="hero-section">
         <div className="hero-content">
-          <h1 className="hero-title">Discover Premium Tech & Gadgets</h1>
+          <h1 className="hero-title">Discover products you'll love</h1>
           <p className="hero-subtitle">
-            Upgrade your lifestyle with our curated collection of the latest electronics, accessories, and more.
+            Upgrade your lifestyle with our curated collection of the latest electronics, fashion, and accessories.
           </p>
-          <Link to="/products" className="btn btn-primary hero-btn">Shop Now</Link>
+          <form onSubmit={handleSearch} className="hero-search-form">
+            <input 
+              type="text" 
+              placeholder="Search for anything..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="hero-search-input"
+            />
+            <button type="submit" className="hero-search-btn">Search</button>
+          </form>
         </div>
       </section>
 
