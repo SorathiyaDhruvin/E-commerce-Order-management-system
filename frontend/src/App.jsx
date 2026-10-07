@@ -18,6 +18,8 @@ import ProductDetails from './pages/ProductDetails';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import OrderHistory from './pages/OrderHistory';
+import Profile from './pages/Profile';
+import Wishlist from './pages/Wishlist';
 
 // Pages - Admin
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -55,6 +57,8 @@ function App() {
               <Route path="cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
               <Route path="checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
               <Route path="orders" element={<ProtectedRoute><OrderHistory /></ProtectedRoute>} />
+              <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
             </Route>
 
             {/* Admin Routes */}

@@ -9,6 +9,7 @@ const Navbar = () => {
   const { cart } = useCart();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -48,13 +49,28 @@ const Navbar = () => {
           {isAuthenticated ? (
             <>
               {isAdmin() && <Link to="/admin" className="nav-link">Admin Dashboard</Link>}
-              <Link to="/orders" className="nav-link">My Orders</Link>
+              <Link to="/wishlist" className="nav-link">Wishlist</Link>
               <Link to="/cart" className="nav-link cart-link">
                 🛒 Cart {cartItemsCount > 0 && <span className="cart-badge">{cartItemsCount}</span>}
               </Link>
-              <div className="nav-user">
-                <span>Hi, {user?.firstName}</span>
-                <button onClick={handleLogout} className="btn-logout">Logout</button>
+              <div className="nav-user" onMouseLeave={() => setShowDropdown(false)}>
+                <button onClick={() => setShowDropdown(!showDropdown)} className="user-dropdown-btn">
+                  <div className="nav-avatar">{user?.firstName?.charAt(0) || 'U'}</div>
+                  <span>Hi, {user?.firstName}</span>
+                </button>
+                {showDropdown && (
+                  <div className="user-dropdown-menu">
+                    <div className="dropdown-header">
+                      <strong>{user?.firstName} {user?.lastName}</strong>
+                      <small>{user?.email}</small>
+                    </div>
+                    <Link to="/profile" className="dropdown-item" onClick={() => setShowDropdown(false)}>My Profile</Link>
+                    <Link to="/orders" className="dropdown-item" onClick={() => setShowDropdown(false)}>My Orders</Link>
+                    <Link to="/wishlist" className="dropdown-item" onClick={() => setShowDropdown(false)}>Wishlist</Link>
+                    <div className="dropdown-divider"></div>
+                    <button onClick={handleLogout} className="dropdown-item text-danger">Logout</button>
+                  </div>
+                )}
               </div>
             </>
           ) : (
