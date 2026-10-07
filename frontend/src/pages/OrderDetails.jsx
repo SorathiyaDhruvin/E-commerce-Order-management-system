@@ -66,10 +66,10 @@ const OrderDetails = () => {
                     <img src={item.productImageUrl || 'https://via.placeholder.com/80'} alt={item.productName} className="w-20 h-20 object-cover rounded" />
                     <div>
                       <h4 className="font-semibold">{item.productName}</h4>
-                      <p className="text-sm text-secondary">Qty: {item.quantity} x ${item.price.toFixed(2)}</p>
+                      <p className="text-sm text-secondary">Qty: {item.quantity} x ₹{item.price.toFixed(2)}</p>
                     </div>
                   </div>
-                  <div className="font-semibold">${item.subtotal.toFixed(2)}</div>
+                  <div className="font-semibold">₹{item.subtotal.toFixed(2)}</div>
                 </div>
               ))}
             </div>
@@ -79,12 +79,12 @@ const OrderDetails = () => {
         <div>
           <div className="card p-6 mb-6">
             <h3 className="mb-4 border-b pb-2">Order Summary</h3>
-            <div className="flex justify-between mb-2"><span className="text-secondary">Subtotal</span><span>${order.totalAmount.toFixed(2)}</span></div>
+            <div className="flex justify-between mb-2"><span className="text-secondary">Subtotal</span><span>₹{order.totalAmount.toFixed(2)}</span></div>
             <div className="flex justify-between mb-2"><span className="text-secondary">Shipping</span><span>Free</span></div>
-            <div className="flex justify-between font-bold text-lg mt-4 pt-4 border-t"><span>Total</span><span>${order.totalAmount.toFixed(2)}</span></div>
+            <div className="flex justify-between font-bold text-lg mt-4 pt-4 border-t"><span>Total</span><span>₹{order.totalAmount.toFixed(2)}</span></div>
             <div className="mt-4 pt-4 border-t">
               <span className="text-secondary block mb-1">Payment Status:</span>
-              <span className={`badge ${order.paymentStatus === 'PAID' ? 'badge-success' : 'badge-warning'}`}>{order.paymentStatus}</span>
+              <span className={`badge ₹{order.paymentStatus === 'PAID' ? 'badge-success' : 'badge-warning'}`}>{order.paymentStatus}</span>
             </div>
           </div>
 

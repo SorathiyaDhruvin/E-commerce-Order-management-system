@@ -38,7 +38,7 @@ const AdminDashboard = () => {
           <div className="stat-icon revenue">💰</div>
           <div className="stat-info">
             <p className="stat-label">Total Revenue</p>
-            <h3 className="stat-value">${stats.totalRevenue.toFixed(2)}</h3>
+            <h3 className="stat-value">₹{stats.totalRevenue.toFixed(2)}</h3>
           </div>
         </div>
         

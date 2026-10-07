@@ -65,7 +65,7 @@ const Wishlist = () => {
               <div className="product-info">
                 <span className="product-brand">{item.product.brand}</span>
                 <h3 className="product-name">{item.product.name}</h3>
-                <div className="product-price">${item.product.price.toFixed(2)}</div>
+                <div className="product-price">₹{item.product.price.toFixed(2)}</div>
                 <div className="flex gap-2 mt-4">
                   <button onClick={() => addToCart(item.product.id, 1)} className="btn btn-primary" style={{flex: 1, padding: '0.5rem'}}>Add to Cart</button>
                   <button onClick={() => removeFromWishlist(item.product.id)} className="btn btn-danger" style={{padding: '0.5rem'}}>Remove</button>

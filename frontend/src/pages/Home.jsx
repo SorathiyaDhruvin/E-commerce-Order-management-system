@@ -109,7 +109,7 @@ const Home = () => {
                 <div className="product-info">
                   <span className="product-brand">{product.brand}</span>
                   <h3 className="product-name">{product.name}</h3>
-                  <div className="product-price">${product.price.toFixed(2)}</div>
+                  <div className="product-price">₹{product.price.toFixed(2)}</div>
                   <Link to={`/products/${product.id}`} className="btn btn-secondary w-full">View Details</Link>
                 </div>
               </div>

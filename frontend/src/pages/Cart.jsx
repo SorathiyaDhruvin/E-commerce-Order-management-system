@@ -68,7 +68,7 @@ const Cart = () => {
                 </div>
               </div>
               
-              <div className="col-price">${item.price.toFixed(2)}</div>
+              <div className="col-price">₹{item.price.toFixed(2)}</div>
               
               <div className="col-quantity">
                 <div className="quantity-controls small">
@@ -96,7 +96,7 @@ const Cart = () => {
               </div>
               
               <div className="col-subtotal font-semibold">
-                ${item.subtotal.toFixed(2)}
+                ₹{item.subtotal.toFixed(2)}
               </div>
               
               <div className="col-actions">
@@ -125,7 +125,7 @@ const Cart = () => {
           <h3>Order Summary</h3>
           <div className="summary-row">
             <span>Subtotal</span>
-            <span>${cart.total.toFixed(2)}</span>
+            <span>₹{cart.total.toFixed(2)}</span>
           </div>
           <div className="summary-row">
             <span>Shipping</span>
@@ -138,7 +138,7 @@ const Cart = () => {
           <div className="summary-divider"></div>
           <div className="summary-row total">
             <span>Estimated Total</span>
-            <span>${cart.total.toFixed(2)}</span>
+            <span>₹{cart.total.toFixed(2)}</span>
           </div>
           
           <button 

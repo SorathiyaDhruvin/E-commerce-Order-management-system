@@ -89,7 +89,7 @@ const OrderHistory = () => {
                 </div>
                 <div className="order-total">
                   <span className="label">Total:</span>
-                  <span className="font-semibold">${order.totalAmount.toFixed(2)}</span>
+                  <span className="font-semibold">₹{order.totalAmount.toFixed(2)}</span>
                 </div>
                 <div className="order-number">
                   <span className="label">Order #:</span>
@@ -97,7 +97,7 @@ const OrderHistory = () => {
                 </div>
               </div>
               <div className="order-status-badges">
-                <span className={`badge ${getStatusBadgeClass(order.orderStatus)}`}>
+                <span className={`badge ₹{getStatusBadgeClass(order.orderStatus)}`}>
                   {order.orderStatus}
                 </span>
                 {order.paymentStatus === 'PAID' && (
@@ -126,11 +126,11 @@ const OrderHistory = () => {
                       </Link>
                       <div className="order-item-meta">
                         <span>Qty: {item.quantity}</span>
-                        <span>${item.price.toFixed(2)} each</span>
+                        <span>₹{item.price.toFixed(2)} each</span>
                       </div>
                     </div>
                     <div className="order-item-subtotal">
-                      ${item.subtotal.toFixed(2)}
+                      ₹{item.subtotal.toFixed(2)}
                     </div>
                   </div>
                 ))}

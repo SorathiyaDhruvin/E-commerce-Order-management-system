@@ -32,7 +32,7 @@ const OrderManagement = () => {
     try {
       const res = await api.put(`/admin/orders/${orderId}/status`, { status: newStatus });
       if (res.data.success) {
-        toast.success(`Order status updated to ${newStatus}`);
+        toast.success(`Order status updated to ₹{newStatus}`);
         fetchOrders(); // Refresh the list
       }
     } catch (error) {
@@ -93,14 +93,14 @@ const OrderManagement = () => {
                 <td className="font-monospace">{order.orderNumber}</td>
                 <td>{new Date(order.createdAt).toLocaleDateString()}</td>
                 <td>{order.customerName}</td>
-                <td className="font-semibold">${order.totalAmount.toFixed(2)}</td>
+                <td className="font-semibold">₹{order.totalAmount.toFixed(2)}</td>
                 <td>
-                  <span className={`badge ${order.paymentStatus === 'PAID' ? 'badge-success' : 'badge-warning'}`}>
+                  <span className={`badge ₹{order.paymentStatus === 'PAID' ? 'badge-success' : 'badge-warning'}`}>
                     {order.paymentStatus}
                   </span>
                 </td>
                 <td>
-                  <span className={`badge ${getStatusBadgeClass(order.orderStatus)}`}>
+                  <span className={`badge ₹{getStatusBadgeClass(order.orderStatus)}`}>
                     {order.orderStatus}
                   </span>
                 </td>

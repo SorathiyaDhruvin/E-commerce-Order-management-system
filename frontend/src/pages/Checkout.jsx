@@ -127,7 +127,7 @@ const Checkout = () => {
                 {addresses.map(address => (
                   <label 
                     key={address.id} 
-                    className={`address-card ${selectedAddressId === address.id ? 'selected' : ''}`}
+                    className={`address-card ₹{selectedAddressId === address.id ? 'selected' : ''}`}
                   >
                     <input 
                       type="radio" 
@@ -232,7 +232,7 @@ const Checkout = () => {
                     <div className="summary-item-name">{item.productName}</div>
                     <div className="summary-item-qty">Qty: {item.quantity}</div>
                   </div>
-                  <div className="summary-item-price">${item.subtotal.toFixed(2)}</div>
+                  <div className="summary-item-price">₹{item.subtotal.toFixed(2)}</div>
                 </div>
               ))}
             </div>
@@ -240,7 +240,7 @@ const Checkout = () => {
             <div className="summary-totals">
               <div className="summary-row">
                 <span>Subtotal</span>
-                <span>${cart.total.toFixed(2)}</span>
+                <span>₹{cart.total.toFixed(2)}</span>
               </div>
               <div className="summary-row">
                 <span>Shipping</span>
@@ -253,7 +253,7 @@ const Checkout = () => {
               <div className="summary-divider"></div>
               <div className="summary-row total">
                 <span>Total</span>
-                <span>${cart.total.toFixed(2)}</span>
+                <span>₹{cart.total.toFixed(2)}</span>
               </div>
             </div>
             

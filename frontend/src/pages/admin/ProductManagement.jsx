@@ -148,7 +148,7 @@ const ProductManagement = () => {
             
             <div className="grid grid-cols-3">
               <div className="form-group">
-                <label className="form-label">Price ($)</label>
+                <label className="form-label">Price (₹)</label>
                 <input type="number" step="0.01" name="price" className="form-control" value={formData.price} onChange={handleInputChange} required />
               </div>
               <div className="form-group">
@@ -211,9 +211,9 @@ const ProductManagement = () => {
                 </td>
                 <td className="font-semibold">{product.name}</td>
                 <td>{product.categoryName}</td>
-                <td>${product.price.toFixed(2)}</td>
+                <td>₹{product.price.toFixed(2)}</td>
                 <td>
-                  <span className={`badge ${product.stockQuantity <= 5 ? 'badge-warning' : 'badge-success'}`}>
+                  <span className={`badge ₹{product.stockQuantity <= 5 ? 'badge-warning' : 'badge-success'}`}>
                     {product.stockQuantity}
                   </span>
                 </td>
